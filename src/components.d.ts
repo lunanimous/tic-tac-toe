@@ -12,21 +12,21 @@ import {
 } from '@stencil/router';
 
 export namespace Components {
-  interface AppHome {}
   interface AppProfile {
     'match': MatchResults;
   }
-  interface AppRoot {}
+  interface LunaGame {
+    'match': MatchResults;
+  }
+  interface LunaHome {}
+  interface LunaPlayer {
+    'address': string;
+  }
+  interface LunaRoot {}
 }
 
 declare global {
 
-
-  interface HTMLAppHomeElement extends Components.AppHome, HTMLStencilElement {}
-  var HTMLAppHomeElement: {
-    prototype: HTMLAppHomeElement;
-    new (): HTMLAppHomeElement;
-  };
 
   interface HTMLAppProfileElement extends Components.AppProfile, HTMLStencilElement {}
   var HTMLAppProfileElement: {
@@ -34,29 +34,57 @@ declare global {
     new (): HTMLAppProfileElement;
   };
 
-  interface HTMLAppRootElement extends Components.AppRoot, HTMLStencilElement {}
-  var HTMLAppRootElement: {
-    prototype: HTMLAppRootElement;
-    new (): HTMLAppRootElement;
+  interface HTMLLunaGameElement extends Components.LunaGame, HTMLStencilElement {}
+  var HTMLLunaGameElement: {
+    prototype: HTMLLunaGameElement;
+    new (): HTMLLunaGameElement;
+  };
+
+  interface HTMLLunaHomeElement extends Components.LunaHome, HTMLStencilElement {}
+  var HTMLLunaHomeElement: {
+    prototype: HTMLLunaHomeElement;
+    new (): HTMLLunaHomeElement;
+  };
+
+  interface HTMLLunaPlayerElement extends Components.LunaPlayer, HTMLStencilElement {}
+  var HTMLLunaPlayerElement: {
+    prototype: HTMLLunaPlayerElement;
+    new (): HTMLLunaPlayerElement;
+  };
+
+  interface HTMLLunaRootElement extends Components.LunaRoot, HTMLStencilElement {}
+  var HTMLLunaRootElement: {
+    prototype: HTMLLunaRootElement;
+    new (): HTMLLunaRootElement;
   };
   interface HTMLElementTagNameMap {
-    'app-home': HTMLAppHomeElement;
     'app-profile': HTMLAppProfileElement;
-    'app-root': HTMLAppRootElement;
+    'luna-game': HTMLLunaGameElement;
+    'luna-home': HTMLLunaHomeElement;
+    'luna-player': HTMLLunaPlayerElement;
+    'luna-root': HTMLLunaRootElement;
   }
 }
 
 declare namespace LocalJSX {
-  interface AppHome {}
   interface AppProfile {
     'match'?: MatchResults;
   }
-  interface AppRoot {}
+  interface LunaGame {
+    'match'?: MatchResults;
+  }
+  interface LunaHome {}
+  interface LunaPlayer {
+    'address'?: string;
+  }
+  interface LunaRoot {}
 
   interface IntrinsicElements {
-    'app-home': AppHome;
     'app-profile': AppProfile;
-    'app-root': AppRoot;
+    'luna-game': LunaGame;
+    'luna-home': LunaHome;
+    'luna-player': LunaPlayer;
+    'luna-root': LunaRoot;
   }
 }
 
@@ -66,9 +94,11 @@ export { LocalJSX as JSX };
 declare module "@stencil/core" {
   export namespace JSX {
     interface IntrinsicElements {
-      'app-home': LocalJSX.AppHome & JSXBase.HTMLAttributes<HTMLAppHomeElement>;
       'app-profile': LocalJSX.AppProfile & JSXBase.HTMLAttributes<HTMLAppProfileElement>;
-      'app-root': LocalJSX.AppRoot & JSXBase.HTMLAttributes<HTMLAppRootElement>;
+      'luna-game': LocalJSX.LunaGame & JSXBase.HTMLAttributes<HTMLLunaGameElement>;
+      'luna-home': LocalJSX.LunaHome & JSXBase.HTMLAttributes<HTMLLunaHomeElement>;
+      'luna-player': LocalJSX.LunaPlayer & JSXBase.HTMLAttributes<HTMLLunaPlayerElement>;
+      'luna-root': LocalJSX.LunaRoot & JSXBase.HTMLAttributes<HTMLLunaRootElement>;
     }
   }
 }
