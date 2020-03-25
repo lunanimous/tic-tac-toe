@@ -1,12 +1,12 @@
-import { Component, h, Prop, State, Watch } from "@stencil/core";
-import Iqons from "@nimiq/iqons";
+import { Component, h, Prop, State, Watch } from '@stencil/core';
+import Iqons from '@nimiq/iqons';
 
 @Component({
-  tag: "luna-player"
+  tag: 'luna-player'
 })
 export class LunaPlayer {
   @Prop() address: string;
-  @Watch("address")
+  @Watch('address')
   onAddressChanged() {
     console.log(this.address);
   }
@@ -21,13 +21,12 @@ export class LunaPlayer {
   async update() {
     if (!this.address || this.address.length === 0) {
       this._address = null;
-      this._iqon = Iqons.placeholderToDataUrl("#bbb", 1);
+      this._iqon = Iqons.placeholderToDataUrl('#bbb', 1);
       return;
     }
 
     this._iqon = await Iqons.toDataUrl(this.address);
-    this._address = this.address.split(" ");
-    console.log(this._address);
+    this._address = this.address.split(' ');
   }
 
   render() {
@@ -38,7 +37,7 @@ export class LunaPlayer {
         {this._address ? (
           <div
             class="hidden sm:flex flex-wrap max-w-sm leading-tight font-mono text-gray-500 tracking-wide"
-            style={{ "max-width": "10rem" }}
+            style={{ 'max-width': '10rem' }}
           >
             {this._address.map(part => (
               <p class="w-1/3">{part}</p>

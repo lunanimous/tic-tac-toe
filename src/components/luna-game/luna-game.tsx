@@ -15,6 +15,8 @@ export class LunaGame {
   @Prop() match: MatchResults;
 
   @State() address: string = '';
+  @State() playerOne: string;
+  @State() playerTwo: string;
   @State() fields = {
     a1: 0,
     a2: 0,
@@ -63,6 +65,59 @@ export class LunaGame {
 
     this.wallet = this.parseGameAddress(_address);
     this.address = this.wallet.address.toUserFriendlyAddress();
+
+    this.client.addTransactionListener(
+      async transaction => {
+        console.log(transaction);
+        const isPlayerOne =
+          transaction.sender.toUserFriendlyAddress() === this.playerOne;
+        const isPlayerTwo =
+          transaction.sender.toUserFriendlyAddress() === this.playerTwo;
+
+        const move = {};
+        const field = Nimiq.BufferUtils.toAscii(transaction.data.raw);
+        move[field] = isPlayerOne ? 1 : isPlayerTwo ? 2 : 0;
+
+        this.fields = Object.assign({}, this.fields, move);
+      },
+      [this.wallet.address]
+    );
+
+    await this.client.waitForConsensusEstablished();
+
+    const transactions = await this.client.getTransactionsByAddress(
+      this.address
+    );
+
+    // build activity
+    console.log(transactions);
+    let moves = [];
+
+    const sorted = transactions.sort((t1, t2) => t1.timestamp - t2.timestamp);
+
+    sorted.forEach(transaction => {
+      if (!this.playerOne) {
+        this.playerOne = transaction.sender.toUserFriendlyAddress();
+      } else if (!this.playerTwo) {
+        this.playerTwo = transaction.sender.toUserFriendlyAddress();
+      }
+
+      const isPlayerOne =
+        transaction.sender.toUserFriendlyAddress() === this.playerOne;
+      const isPlayerTwo =
+        transaction.sender.toUserFriendlyAddress() === this.playerTwo;
+
+      const move = {};
+      const field = Nimiq.BufferUtils.toAscii(transaction.data.raw);
+      move[field] = isPlayerOne ? 1 : isPlayerTwo ? 2 : 0;
+
+      moves.push(move);
+    });
+
+    moves.forEach(move => {
+      console.log(move);
+      this.fields = Object.assign({}, this.fields, move);
+    });
   }
 
   async startConsensus() {
@@ -79,11 +134,11 @@ export class LunaGame {
     console.log('Syncing and establishing consensus...');
 
     // Can be 'syncing', 'established', and 'lost'
-    client.addConsensusChangedListener(consensus =>
+    this.client.addConsensusChangedListener(consensus =>
       console.log(`Consensus: ${consensus}`)
     );
 
-    client.addHeadChangedListener(async () => {
+    this.client.addHeadChangedListener(async () => {
       console.log('head changed');
       const height = await this.client.getHeadHeight();
       console.log(height);
@@ -107,11 +162,11 @@ export class LunaGame {
     return (
       <div class="relative bg-white rounded-md mt-4 p-4 shadow-lg">
         <div class="flex w-full items-center">
-          <luna-player class="flex-1" address={''}></luna-player>
+          <luna-player class="flex-1" address={this.playerOne}></luna-player>
           <div class="flex flex-none items-center justify-center w-12 h-12 rounded-full bg-gray-200 text-gray-800 font-bold mx-8">
             vs
           </div>
-          <luna-player class="flex-1" address={''}></luna-player>
+          <luna-player class="flex-1" address={this.playerTwo}></luna-player>
         </div>
 
         <p class="p-6 text-center">Waiting for players...</p>
