@@ -9,16 +9,21 @@
 import { HTMLStencilElement, JSXBase } from '@stencil/core/internal';
 import {
   MatchResults,
+  RouterHistory,
 } from '@stencil/router';
 
 export namespace Components {
-  interface AppProfile {
-    'match': MatchResults;
+  interface LunaField {
+    'middle': boolean;
+    'name': string;
+    'value': number;
   }
   interface LunaGame {
     'match': MatchResults;
   }
-  interface LunaHome {}
+  interface LunaHome {
+    'history': RouterHistory;
+  }
   interface LunaPlayer {
     'address': string;
   }
@@ -28,10 +33,10 @@ export namespace Components {
 declare global {
 
 
-  interface HTMLAppProfileElement extends Components.AppProfile, HTMLStencilElement {}
-  var HTMLAppProfileElement: {
-    prototype: HTMLAppProfileElement;
-    new (): HTMLAppProfileElement;
+  interface HTMLLunaFieldElement extends Components.LunaField, HTMLStencilElement {}
+  var HTMLLunaFieldElement: {
+    prototype: HTMLLunaFieldElement;
+    new (): HTMLLunaFieldElement;
   };
 
   interface HTMLLunaGameElement extends Components.LunaGame, HTMLStencilElement {}
@@ -58,7 +63,7 @@ declare global {
     new (): HTMLLunaRootElement;
   };
   interface HTMLElementTagNameMap {
-    'app-profile': HTMLAppProfileElement;
+    'luna-field': HTMLLunaFieldElement;
     'luna-game': HTMLLunaGameElement;
     'luna-home': HTMLLunaHomeElement;
     'luna-player': HTMLLunaPlayerElement;
@@ -67,20 +72,25 @@ declare global {
 }
 
 declare namespace LocalJSX {
-  interface AppProfile {
-    'match'?: MatchResults;
+  interface LunaField {
+    'middle'?: boolean;
+    'name'?: string;
+    'onFieldSelected'?: (event: CustomEvent<any>) => void;
+    'value'?: number;
   }
   interface LunaGame {
     'match'?: MatchResults;
   }
-  interface LunaHome {}
+  interface LunaHome {
+    'history'?: RouterHistory;
+  }
   interface LunaPlayer {
     'address'?: string;
   }
   interface LunaRoot {}
 
   interface IntrinsicElements {
-    'app-profile': AppProfile;
+    'luna-field': LunaField;
     'luna-game': LunaGame;
     'luna-home': LunaHome;
     'luna-player': LunaPlayer;
@@ -94,7 +104,7 @@ export { LocalJSX as JSX };
 declare module "@stencil/core" {
   export namespace JSX {
     interface IntrinsicElements {
-      'app-profile': LocalJSX.AppProfile & JSXBase.HTMLAttributes<HTMLAppProfileElement>;
+      'luna-field': LocalJSX.LunaField & JSXBase.HTMLAttributes<HTMLLunaFieldElement>;
       'luna-game': LocalJSX.LunaGame & JSXBase.HTMLAttributes<HTMLLunaGameElement>;
       'luna-home': LocalJSX.LunaHome & JSXBase.HTMLAttributes<HTMLLunaHomeElement>;
       'luna-player': LocalJSX.LunaPlayer & JSXBase.HTMLAttributes<HTMLLunaPlayerElement>;

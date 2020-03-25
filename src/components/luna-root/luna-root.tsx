@@ -1,7 +1,7 @@
-import { Component, h, Host } from "@stencil/core";
+import { Component, h, Host } from '@stencil/core';
 
 @Component({
-  tag: "luna-root"
+  tag: 'luna-root'
 })
 export class LunaRoot {
   render() {
@@ -41,6 +41,12 @@ export class LunaRoot {
             </stencil-route-switch>
           </stencil-router>
         </main>
+
+        <footer class="max-w-2xl mx-auto text-center mt-16 border-t">
+          <p class="text-gray-500 mt-8">
+            &copy; Lunanimous. All rights reserved.
+          </p>
+        </footer>
       </Host>
     );
   }
