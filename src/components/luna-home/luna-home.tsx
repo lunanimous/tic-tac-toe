@@ -23,6 +23,10 @@ export class LunaHome {
   ];
 
   createNewGame() {
+    // generate wallet for game
+    // const wallet = Nimiq.Wallet.generate();
+    // const buffer = wallet.exportPlain();
+    // const urlSafe = Nimiq.BufferUtils.toBase64Url(buffer).replace(/\./g, '=');
     alert('new game');
   }
 

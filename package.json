@@ -20,6 +20,8 @@
   },
   "license": "MIT",
   "dependencies": {
+    "@nimiq/core-web": "^1.5.6",
+    "@nimiq/hub-api": "^1.2.0",
     "@nimiq/iqons": "^1.5.2",
     "microtip": "^0.2.2"
   }

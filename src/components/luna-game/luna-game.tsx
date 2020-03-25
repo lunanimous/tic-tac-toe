@@ -1,13 +1,20 @@
 import { Component, h, Prop, State, Listen } from '@stencil/core';
 import { MatchResults } from '@stencil/router';
+import Nimiq, { Client, ClientNetwork, Wallet } from '@nimiq/core-web';
+import HubApi from '@nimiq/hub-api';
 
 @Component({
   tag: 'luna-game'
 })
 export class LunaGame {
+  client: Client;
+  network: ClientNetwork;
+  hub: HubApi;
+  wallet: Wallet = null;
+
   @Prop() match: MatchResults;
 
-  @State() address: string = null;
+  @State() address: string = '';
   @State() fields = {
     a1: 0,
     a2: 0,
@@ -21,11 +28,23 @@ export class LunaGame {
   };
 
   @Listen('fieldSelected')
-  onFieldSelected(event) {
+  async onFieldSelected(event) {
     console.log(event.detail);
+    const field = event.detail;
+
+    const options = {
+      appName: 'Tic Tac Toe',
+      recipient: this.address,
+      value: 1 * 1e5,
+      extraData: field
+    };
+
+    // All client requests are async and return a promise
+    const signedTransaction = await this.hub.checkout(options);
+    console.log(signedTransaction);
   }
 
-  componentWillLoad() {
+  async componentWillLoad() {
     let _address;
     if (this.match && this.match.params && this.match.params.game) {
       _address = this.match.params.game;
@@ -33,17 +52,55 @@ export class LunaGame {
       _address = null;
     }
 
-    if (this.isValidGame(_address)) {
-      this.address = _address;
-    }
+    // start hub api
+    this.hub = new HubApi('https://hub.nimiq-testnet.com');
+
+    // start nimiq consensus
+    const workerUrl = location.origin + '/workers/';
+    await Nimiq.load(workerUrl);
+
+    this.startConsensus();
+
+    this.wallet = this.parseGameAddress(_address);
+    this.address = this.wallet.address.toUserFriendlyAddress();
   }
 
-  isValidGame(address: string) {
+  async startConsensus() {
+    console.log('Nimiq loaded. Establishing consensus...');
+
+    // Code from 'Getting started'
+    Nimiq.GenesisConfig.test();
+    const configBuilder = Nimiq.Client.Configuration.builder();
+    const client = configBuilder.instantiateClient();
+
+    this.client = client;
+    this.network = client.network;
+
+    console.log('Syncing and establishing consensus...');
+
+    // Can be 'syncing', 'established', and 'lost'
+    client.addConsensusChangedListener(consensus =>
+      console.log(`Consensus: ${consensus}`)
+    );
+
+    client.addHeadChangedListener(async () => {
+      console.log('head changed');
+      const height = await this.client.getHeadHeight();
+      console.log(height);
+    });
+  }
+
+  parseGameAddress(address: string) {
     if (!address || address.length === 0) {
-      return false;
+      return null;
     }
 
-    return true;
+    const cleanKey = address.replace(/\=/g, '.');
+    const buffer = Nimiq.BufferUtils.fromBase64Url(cleanKey);
+    const wallet = Nimiq.Wallet.loadPlain(buffer);
+    console.log(wallet.address.toUserFriendlyAddress());
+
+    return wallet;
   }
 
   render() {
@@ -56,6 +113,8 @@ export class LunaGame {
           </div>
           <luna-player class="flex-1" address={''}></luna-player>
         </div>
+
+        <p class="p-6 text-center">Waiting for players...</p>
 
         <div class="flex items-center justify-center mt-8 mb-8">
           <div>
@@ -88,6 +147,8 @@ export class LunaGame {
             </div>
           </div>
         </div>
+
+        <p>{this.address}</p>
       </div>
     );
   }
