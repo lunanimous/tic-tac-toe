@@ -3,13 +3,22 @@ import { MatchResults } from '@stencil/router';
 import { initializeNimiq, nimiq } from '../../models/nimiq';
 import { Game, Board } from '../../models/game';
 
+enum GAME_STATUS {
+  LOADING,
+  JOIN,
+  WAIT,
+  PLAY
+}
+
 @Component({
   tag: 'luna-game'
 })
 export class LunaGame {
+  connectedPlayer: string = null;
+
   @Prop() match: MatchResults;
 
-  @State() status = '';
+  @State() status: GAME_STATUS = GAME_STATUS.LOADING;
   @State() address: string = '';
   @State() playerOne: string;
   @State() playerTwo: string;
@@ -48,6 +57,8 @@ export class LunaGame {
   }
 
   async componentDidLoad() {
+    this.connectedPlayer = nimiq.user;
+
     let _address;
     if (this.match && this.match.params && this.match.params.game) {
       _address = this.match.params.game;
@@ -71,15 +82,19 @@ export class LunaGame {
 
     // missing one player
     if (!this.playerTwo) {
-      this.status = 'join';
+      this.status = GAME_STATUS.WAIT;
     } else {
-      this.status = 'play';
+      this.status = GAME_STATUS.PLAY;
     }
   }
 
   render() {
     return (
       <div class="relative bg-white rounded-md mt-4 p-4 shadow-lg">
+        <div class="flex w-full items-center mb-2">
+          <p class="flex-1 text-center mr-12 pr-2 text-lg">Player X</p>
+          <p class="flex-1 text-center ml-12 pl-2 text-lg">Player O</p>
+        </div>
         <div class="flex w-full items-center">
           <luna-player class="flex-1" address={this.playerOne}></luna-player>
           <div class="flex flex-none items-center justify-center w-12 h-12 rounded-full bg-gray-200 text-gray-800 font-bold mx-8">
@@ -88,7 +103,7 @@ export class LunaGame {
           <luna-player class="flex-1" address={this.playerTwo}></luna-player>
         </div>
 
-        <div class="relative flex items-center justify-center mt-8 mb-8">
+        <div class="relative flex items-center justify-center mt-8 mb-8 overflow-hidden">
           <div>
             <div class="flex">
               <luna-field name={'a1'} value={this.board['a1']}></luna-field>
@@ -119,21 +134,27 @@ export class LunaGame {
             </div>
           </div>
 
-          {this.status === 'join' ? (
+          {this.status === GAME_STATUS.LOADING ? (
+            <div class="absolute inset-0 flex items-center justify-center light-overlay">
+              <p class="text-lg font-bold">Loading...</p>
+            </div>
+          ) : null}
+
+          {this.status === GAME_STATUS.JOIN ? (
             <div class="absolute inset-0 flex items-center justify-center light-overlay">
               <button
                 onClick={() => {
                   this.join();
                 }}
                 type="button"
-                class="button bg-indigo-700 hover:bg-indigo-800 text-white focus:outline-none focus:shadow-outline px-8 py-4"
+                class="button bg-indigo-700 hover:bg-indigo-800 text-white focus:outline-none focus:shadow-outline px-6 py-2"
               >
                 Join game
               </button>
             </div>
           ) : null}
 
-          {this.status === 'wait' ? (
+          {this.status === GAME_STATUS.WAIT ? (
             <div class="absolute inset-0 flex items-center justify-center light-overlay">
               <p class="text-lg font-bold">Waiting for other player...</p>
             </div>

@@ -5,12 +5,14 @@ interface NimiqHelper {
   client: Client;
   network: ClientNetwork;
   hub: HubApi;
+  user: string;
 }
 
 export const nimiq: NimiqHelper = {
   client: null,
   network: null,
-  hub: new HubApi('https://hub.nimiq-testnet.com')
+  hub: new HubApi('https://hub.nimiq-testnet.com'),
+  user: null
 };
 
 let consensusResolver;
@@ -25,13 +27,15 @@ export async function nimiqLoaded() {
 
 export async function initializeNimiq() {
   // load nimiq library
-  const workerUrl = location.origin + '/workers/';
+  const workerUrl = location.origin + '/tic-tac-toe/workers/';
   await Nimiq.load(workerUrl);
 
   loadedResolver();
 
   // start consensus
-  startConsensus();
+  if (!nimiq.client) {
+    startConsensus();
+  }
 }
 
 async function startConsensus() {

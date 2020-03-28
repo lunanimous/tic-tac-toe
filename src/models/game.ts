@@ -71,7 +71,6 @@ export class Game {
 
   async initialize() {
     this.state.address = this.wallet.address.toUserFriendlyAddress();
-    this.notify();
 
     await consensusEstablished();
 

@@ -5,5 +5,5 @@ export default async () => {
    * is wrapped in the function() that is exported.
    */
 
-  window["NIMIQ_IQONS_SVG_PATH"] = "./assets/iqons.min.svg";
+  window['NIMIQ_IQONS_SVG_PATH'] = './assets/iqons.min.svg';
 };
