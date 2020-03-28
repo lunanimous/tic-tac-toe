@@ -78,9 +78,7 @@ export class LunaGame {
     const leaveHandler = event => {
       const field = event.target.name;
 
-      const isSimulated =
-        this.board[field] === Sign.SimCircle ||
-        this.board[field] === Sign.SimCross;
+      const isSimulated = this.board[field] === Sign.SimCircle || this.board[field] === Sign.SimCross;
 
       if (!isSimulated) {
         return;
@@ -103,6 +101,7 @@ export class LunaGame {
       appName: 'Tic Tac Toe',
       recipient: this.address,
       value: 1 * 1e5,
+      fee: 1,
       extraData: Game.JOIN
     };
 
@@ -115,6 +114,7 @@ export class LunaGame {
       sender: this.connectedPlayer,
       recipient: this.address,
       value: 1 * 1e5,
+      fee: 1,
       extraData: field
     };
 
@@ -130,14 +130,10 @@ export class LunaGame {
     this.nextPlayer = state.nextPlayer;
 
     // which sign does the current user have ?
-    this.simulatedSign =
-      this.connectedPlayer === this.playerOne ? Sign.SimCross : Sign.SimCircle;
+    this.simulatedSign = this.connectedPlayer === this.playerOne ? Sign.SimCross : Sign.SimCircle;
 
     const noPlayers = !this.playerOne && !this.playerTwo;
-    const otherPlayerJoined =
-      this.playerOne &&
-      !this.playerTwo &&
-      this.connectedPlayer !== this.playerOne;
+    const otherPlayerJoined = this.playerOne && !this.playerTwo && this.connectedPlayer !== this.playerOne;
 
     if (noPlayers || otherPlayerJoined) {
       this.status = GAME_STATUS.JOIN;
@@ -194,29 +190,17 @@ export class LunaGame {
           <div>
             <div class="flex">
               <luna-field name={'a1'} value={this.board['a1']}></luna-field>
-              <luna-field
-                name={'a2'}
-                value={this.board['a2']}
-                middle={true}
-              ></luna-field>
+              <luna-field name={'a2'} value={this.board['a2']} middle={true}></luna-field>
               <luna-field name={'a3'} value={this.board['a3']}></luna-field>
             </div>
             <div class="flex border-t-2 border-b-2 border-indigo-800">
               <luna-field name={'b1'} value={this.board['b1']}></luna-field>
-              <luna-field
-                name={'b2'}
-                value={this.board['b2']}
-                middle={true}
-              ></luna-field>
+              <luna-field name={'b2'} value={this.board['b2']} middle={true}></luna-field>
               <luna-field name={'b3'} value={this.board['b3']}></luna-field>
             </div>
             <div class="flex">
               <luna-field name={'c1'} value={this.board['c1']}></luna-field>
-              <luna-field
-                name={'c2'}
-                value={this.board['c2']}
-                middle={true}
-              ></luna-field>
+              <luna-field name={'c2'} value={this.board['c2']} middle={true}></luna-field>
               <luna-field name={'c3'} value={this.board['c3']}></luna-field>
             </div>
           </div>
@@ -267,9 +251,7 @@ export class LunaGame {
 
           {this.status === GAME_STATUS.NOT_IN_GAME ? (
             <div class="absolute inset-0 flex items-center justify-center light-overlay">
-              <p class="text-lg font-bold">
-                Hum, looks like you're not in this game
-              </p>
+              <p class="text-lg font-bold">Hum, looks like you're not in this game</p>
             </div>
           ) : null}
         </div>

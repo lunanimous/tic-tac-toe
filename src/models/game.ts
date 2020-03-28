@@ -62,19 +62,9 @@ export class Game {
     }
   };
 
+  static FEE = 1;
   static JOIN = 'join';
-  static ALLOWED_MOVES = [
-    'a1',
-    'a2',
-    'a3',
-    'b1',
-    'b2',
-    'b3',
-    'c1',
-    'c2',
-    'c3',
-    Game.JOIN
-  ];
+  static ALLOWED_MOVES = ['a1', 'a2', 'a3', 'b1', 'b2', 'b3', 'c1', 'c2', 'c3', Game.JOIN];
 
   constructor(wallet) {
     this.wallet = wallet;
@@ -85,12 +75,16 @@ export class Game {
 
     await consensusEstablished;
 
-    const transactions = await nimiq.client.getTransactionsByAddress(
-      this.wallet.address
-    );
+    const transactions = await nimiq.client.getTransactionsByAddress(this.wallet.address);
 
     // handle existing transactions (oldest first)
     const moves = transactions
+      .filter(transaction => {
+        const isMined = transaction.state !== Nimiq.Client.TransactionState.MINED;
+        const isConfirmed = transaction.state !== Nimiq.Client.TransactionState.CONFIRMED;
+
+        return isMined || isConfirmed;
+      })
       .sort((t1, t2) => {
         return t1.timestamp - t2.timestamp;
       })
@@ -104,6 +98,14 @@ export class Game {
     // start listening for new transactions
     nimiq.client.addTransactionListener(
       (transaction: ClientTransactionDetails) => {
+        const isMined = transaction.state !== Nimiq.Client.TransactionState.MINED;
+        const isConfirmed = transaction.state !== Nimiq.Client.TransactionState.CONFIRMED;
+
+        if (!isMined && !isConfirmed) {
+          // we ignore unconfirmed transactions
+          return;
+        }
+
         const move = this.convertTransactionToMove(transaction);
 
         this.addMove(move);
@@ -136,26 +138,22 @@ export class Game {
 
     // play move on board
     if (move.field !== Game.JOIN) {
-      this.state.board[move.field] = isPlayerOne
-        ? Sign.Cross
-        : isPlayerTwo
-        ? Sign.Circle
-        : Sign.Empty;
+      this.state.board[move.field] = isPlayerOne ? Sign.Cross : isPlayerTwo ? Sign.Circle : Sign.Empty;
     }
 
     // set next player
-    this.state.nextPlayer = isPlayerOne
-      ? this.state.playerTwo
-      : this.state.playerOne;
+    this.state.nextPlayer = isPlayerOne ? this.state.playerTwo : this.state.playerOne;
 
     if (this.isWon()) {
       // victory
       this.state.winner = move.address;
+      this.reward();
     }
 
     if (!this.state.winner && this.state.moves.length >= 2 + 9) {
       // tie
       this.state.winner = 'tie';
+      this.refund();
     }
 
     this.notify();
@@ -167,20 +165,12 @@ export class Game {
       return false;
     }
 
-    if (
-      move.field !== Game.JOIN &&
-      !this.state.playerOne &&
-      !this.state.playerTwo
-    ) {
+    if (move.field !== Game.JOIN && !this.state.playerOne && !this.state.playerTwo) {
       // no players yet, first they need to join
       return false;
     }
 
-    if (
-      move.field === Game.JOIN &&
-      this.state.playerOne &&
-      this.state.playerTwo
-    ) {
+    if (move.field === Game.JOIN && this.state.playerOne && this.state.playerTwo) {
       // not accepting new players
       return false;
     }
@@ -195,16 +185,51 @@ export class Game {
       return false;
     }
 
-    if (
-      move.field !== Game.JOIN &&
-      this.state.nextPlayer !== null &&
-      this.state.nextPlayer !== move.address
-    ) {
+    if (move.field !== Game.JOIN && this.state.nextPlayer !== null && this.state.nextPlayer !== move.address) {
       // not this player's turn
       return false;
     }
 
     return true;
+  }
+
+  async reward() {
+    const account = await nimiq.client.getAccount(this.wallet.address);
+
+    const transaction = this.wallet.createTransaction(
+      Nimiq.Address.fromUserFriendlyAddress(this.state.winner),
+      account.balance - Game.FEE,
+      Game.FEE,
+      await nimiq.client.getHeadHeight()
+    );
+
+    nimiq.client.sendTransaction(transaction);
+  }
+
+  async refund() {
+    const account = await nimiq.client.getAccount(this.wallet.address);
+    const share = Math.floor(account.balance / 2);
+
+    const headHeight = await nimiq.client.getHeadHeight();
+
+    // player 1
+    const transaction1 = this.wallet.createTransaction(
+      Nimiq.Address.fromUserFriendlyAddress(this.state.playerOne),
+      share - Game.FEE,
+      Game.FEE,
+      headHeight
+    );
+
+    // player 2
+    const transaction2 = this.wallet.createTransaction(
+      Nimiq.Address.fromUserFriendlyAddress(this.state.playerTwo),
+      account.balance - share - Game.FEE,
+      Game.FEE,
+      headHeight
+    );
+
+    nimiq.client.sendTransaction(transaction1);
+    nimiq.client.sendTransaction(transaction2);
   }
 
   isWon() {
