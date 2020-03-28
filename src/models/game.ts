@@ -8,41 +8,71 @@ interface Move {
 }
 
 export interface Board {
-  a1: number;
-  a2: number;
-  a3: number;
-  b1: number;
-  b2: number;
-  b3: number;
-  c1: number;
-  c2: number;
-  c3: number;
+  a1?: number;
+  a2?: number;
+  a3?: number;
+  b1?: number;
+  b2?: number;
+  b3?: number;
+  c1?: number;
+  c2?: number;
+  c3?: number;
 }
 
-export class Game {
-  wallet: Wallet;
+export interface GameState {
+  address: string;
   playerOne: string;
   playerTwo: string;
   moves: Move[];
   nextPlayer: string;
-  listeners: Function[] = [];
-  board: Board = {
-    a1: 0,
-    a2: 0,
-    a3: 0,
-    b1: 0,
-    b2: 0,
-    b3: 0,
-    c1: 0,
-    c2: 0,
-    c3: 0
+  board: Board;
+}
+
+export class Game {
+  wallet: Wallet;
+  observers: Function[] = [];
+
+  state: GameState = {
+    address: null,
+    playerOne: null,
+    playerTwo: null,
+    moves: [],
+    nextPlayer: null,
+    board: {
+      a1: 0,
+      a2: 0,
+      a3: 0,
+      b1: 0,
+      b2: 0,
+      b3: 0,
+      c1: 0,
+      c2: 0,
+      c3: 0
+    }
   };
+
+  static JOIN = 'join';
+  static ALLOWED_MOVES = [
+    'a1',
+    'a2',
+    'a3',
+    'b1',
+    'b2',
+    'b3',
+    'c1',
+    'c2',
+    'c3',
+    Game.JOIN
+  ];
 
   constructor(wallet) {
     this.wallet = wallet;
   }
 
   async initialize() {
+    this.state.address = this.wallet.address.toUserFriendlyAddress();
+    this.notify();
+
     await consensusEstablished();
 
     const transactions = await nimiq.client.getTransactionsByAddress(
@@ -50,7 +80,7 @@ export class Game {
     );
 
     console.log(transactions);
-    // handle existing transactions
+    // handle existing transactions (oldest first)
     const moves = transactions
       .sort((t1, t2) => {
         return t1.timestamp - t2.timestamp;
@@ -79,45 +109,67 @@ export class Game {
       return;
     }
 
+    this.state.moves.push(move);
+
     // initialize player if not done yet
-    if (!this.playerOne) {
-      this.playerOne = move.address;
-    } else if (!this.playerTwo) {
-      this.playerTwo = move.address;
+    if (!this.state.playerOne) {
+      this.state.playerOne = move.address;
+    } else if (!this.state.playerTwo) {
+      this.state.playerTwo = move.address;
     }
 
-    const isPlayerOne = move.address === this.playerOne;
-    const isPlayerTwo = move.address === this.playerTwo;
+    const isPlayerOne = move.address === this.state.playerOne;
+    const isPlayerTwo = move.address === this.state.playerTwo;
 
     // play move on board
-    this.board[move.field] = isPlayerOne ? 1 : isPlayerTwo ? 2 : 0;
+    if (move.field !== Game.JOIN) {
+      this.state.board[move.field] = isPlayerOne ? 1 : isPlayerTwo ? 2 : 0;
+    }
 
-    this.update();
-    console.log(this.board);
+    this.notify();
   }
 
   isValidMove(move: Move): boolean {
-    // TODO
+    if (
+      move.field !== Game.JOIN &&
+      !this.state.playerOne &&
+      !this.state.playerTwo
+    ) {
+      // no players yet, first they need to join
+      return false;
+    }
+
+    if (
+      move.field === Game.JOIN &&
+      this.state.playerOne &&
+      this.state.playerTwo
+    ) {
+      // not accepting new players
+      return false;
+    }
+
+    if (Game.ALLOWED_MOVES.indexOf(move.field) === -1) {
+      // unallowed move
+      return false;
+    }
+
+    if (move.field !== Game.JOIN && this.state.board[move.field] !== 0) {
+      // field has already been player
+      return false;
+    }
+
+    if (
+      move.field !== Game.JOIN &&
+      this.state.nextPlayer !== null &&
+      this.state.nextPlayer !== move.address
+    ) {
+      // not this player's turn
+      return false;
+    }
+
     console.log(move);
 
     return true;
-  }
-
-  addUpdateListener(callback) {
-    this.listeners.push(callback);
-  }
-
-  update() {
-    this.listeners.forEach(callback => {
-      const state = {
-        address: this.wallet.address.toUserFriendlyAddress(),
-        board: this.board,
-        playerOne: this.playerOne,
-        playerTwo: this.playerTwo
-      };
-
-      callback(state);
-    });
   }
 
   convertTransactionToMove(transaction: ClientTransactionDetails): Move {
@@ -128,6 +180,20 @@ export class Game {
       address: sender.toUserFriendlyAddress(),
       field: Nimiq.BufferUtils.toAscii(transaction.data.raw)
     };
+  }
+
+  addObserver(callback) {
+    this.observers.push(callback);
+  }
+
+  notify() {
+    this.observers.forEach(callback => {
+      const state = Object.assign({}, this.state, {
+        board: Object.assign({}, this.state.board)
+      });
+
+      callback(state);
+    });
   }
 
   // static async newGame(): Game {

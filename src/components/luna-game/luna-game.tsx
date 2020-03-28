@@ -9,16 +9,33 @@ import { Game, Board } from '../../models/game';
 export class LunaGame {
   @Prop() match: MatchResults;
 
+  @State() status = '';
   @State() address: string = '';
   @State() playerOne: string;
   @State() playerTwo: string;
-  @State() board: Board;
+  @State() board: Board = {};
 
   @Listen('fieldSelected')
   async onFieldSelected(event) {
     console.log(event.detail);
     const field = event.detail;
 
+    this.play(field);
+  }
+
+  async join() {
+    const options = {
+      appName: 'Tic Tac Toe',
+      recipient: this.address,
+      value: 1 * 1e5,
+      extraData: Game.JOIN
+    };
+
+    const signedTransaction = await nimiq.hub.checkout(options);
+    console.log(signedTransaction);
+  }
+
+  async play(field) {
     const options = {
       appName: 'Tic Tac Toe',
       recipient: this.address,
@@ -26,12 +43,11 @@ export class LunaGame {
       extraData: field
     };
 
-    // All client requests are async and return a promise
     const signedTransaction = await nimiq.hub.checkout(options);
     console.log(signedTransaction);
   }
 
-  async componentWillLoad() {
+  async componentDidLoad() {
     let _address;
     if (this.match && this.match.params && this.match.params.game) {
       _address = this.match.params.game;
@@ -42,17 +58,23 @@ export class LunaGame {
     initializeNimiq();
 
     const game = await Game.fromUrlAddress(_address);
-
-    game.addUpdateListener(state => {
-      this.address = state.address;
-      this.board = Object.assign({}, state.board);
-      this.playerOne = state.playerOne;
-      this.playerTwo = state.playerTwo;
-    });
-
+    game.addObserver(this.update.bind(this));
     game.initialize();
+  }
 
-    console.log(game);
+  update(state) {
+    console.log(state);
+    this.address = state.address;
+    this.board = state.board;
+    this.playerOne = state.playerOne;
+    this.playerTwo = state.playerTwo;
+
+    // missing one player
+    if (!this.playerTwo) {
+      this.status = 'join';
+    } else {
+      this.status = 'play';
+    }
   }
 
   render() {
@@ -66,9 +88,7 @@ export class LunaGame {
           <luna-player class="flex-1" address={this.playerTwo}></luna-player>
         </div>
 
-        <p class="p-6 text-center">Waiting for players...</p>
-
-        <div class="flex items-center justify-center mt-8 mb-8">
+        <div class="relative flex items-center justify-center mt-8 mb-8">
           <div>
             <div class="flex">
               <luna-field name={'a1'} value={this.board['a1']}></luna-field>
@@ -98,9 +118,27 @@ export class LunaGame {
               <luna-field name={'c3'} value={this.board['c3']}></luna-field>
             </div>
           </div>
-        </div>
 
-        <p>{this.address}</p>
+          {this.status === 'join' ? (
+            <div class="absolute inset-0 flex items-center justify-center light-overlay">
+              <button
+                onClick={() => {
+                  this.join();
+                }}
+                type="button"
+                class="button bg-indigo-700 hover:bg-indigo-800 text-white focus:outline-none focus:shadow-outline px-8 py-4"
+              >
+                Join game
+              </button>
+            </div>
+          ) : null}
+
+          {this.status === 'wait' ? (
+            <div class="absolute inset-0 flex items-center justify-center light-overlay">
+              <p class="text-lg font-bold">Waiting for other player...</p>
+            </div>
+          ) : null}
+        </div>
       </div>
     );
   }

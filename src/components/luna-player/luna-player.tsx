@@ -8,7 +8,7 @@ export class LunaPlayer {
   @Prop() address: string;
   @Watch('address')
   onAddressChanged() {
-    console.log(this.address);
+    this.update();
   }
 
   @State() _address: string[] = null;
@@ -31,10 +31,15 @@ export class LunaPlayer {
 
   render() {
     return (
-      <div class="flex items-center justify-center">
-        <img src={this._iqon} class="w-16 h-16 mr-4" />
+      <div
+        class="flex items-center justify-center"
+        aria-label={this.address ? this.address : 'No player yet'}
+        data-microtip-position="top"
+        role="tooltip"
+      >
+        <img src={this._iqon} class="w-16 h-16" />
 
-        {this._address ? (
+        {/* {this._address ? (
           <div
             class="hidden sm:flex flex-wrap max-w-sm leading-tight font-mono text-gray-500 tracking-wide"
             style={{ 'max-width': '10rem' }}
@@ -45,7 +50,7 @@ export class LunaPlayer {
           </div>
         ) : (
           <p class="flex flex-1 items-center text-gray-600">No player yet</p>
-        )}
+        )} */}
       </div>
     );
   }
