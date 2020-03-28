@@ -32,6 +32,12 @@ export class LunaHome {
     event.stopPropagation();
     event.preventDefault();
 
+    const shouldDelete = confirm('Do you really want to delete this game ?');
+
+    if (!shouldDelete) {
+      return;
+    }
+
     GameManager.deleteGame(game);
     this.games = GameManager.games;
   }
@@ -66,9 +72,14 @@ export class LunaHome {
         {this.games.map(game => (
           <div
             onClick={() => this.openGame(game)}
-            class="relative group flex items-center bg-white cursor-pointer rounded-md mt-4 p-4 shadow-lg"
+            class="flex items-center bg-white cursor-pointer rounded-md mt-4 p-4 shadow-lg"
           >
-            <div class="absolute z-10 inset-0 left-auto w-24 flex items-center justify-center opacity-0 group-hover:opacity-100 transform duration-100 bg-white">
+            <luna-player class="flex-1" address={game.playerOne}></luna-player>
+            <div class="flex flex-none items-center justify-center w-12 h-12 rounded-full bg-gray-200 text-gray-800 font-bold mx-8">
+              vs
+            </div>
+            <luna-player class="flex-1" address={game.playerTwo}></luna-player>
+            <div class="w-12 ml-2 flex items-center justify-center">
               <button
                 type="button"
                 onClick={e => this.deleteGame(e, game)}
@@ -90,11 +101,6 @@ export class LunaHome {
                 </svg>
               </button>
             </div>
-            <luna-player class="flex-1" address={game.playerOne}></luna-player>
-            <div class="flex flex-none items-center justify-center w-12 h-12 rounded-full bg-gray-200 text-gray-800 font-bold mx-8">
-              vs
-            </div>
-            <luna-player class="flex-1" address={game.playerTwo}></luna-player>
           </div>
         ))}
       </Host>
