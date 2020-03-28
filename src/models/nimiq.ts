@@ -35,8 +35,6 @@ export async function initializeNimiq() {
 }
 
 async function startConsensus() {
-  console.log('Nimiq loaded. Establishing consensus...');
-
   Nimiq.GenesisConfig.test();
   const configBuilder = Nimiq.Client.Configuration.builder();
   const client = configBuilder.instantiateClient();
@@ -44,13 +42,7 @@ async function startConsensus() {
   nimiq.client = client;
   nimiq.network = client.network;
 
-  console.log(nimiq.client._consensusState);
-
-  // does not work if consensus already established
   nimiq.client.waitForConsensusEstablished().then(() => {
-    console.log('established');
     consensusResolver();
   });
-
-  console.log('Syncing and establishing consensus...');
 }

@@ -1,20 +1,27 @@
-import { Component, h, Prop, State, Listen } from '@stencil/core';
+import { Component, h, Prop, State, Listen, Element } from '@stencil/core';
 import { MatchResults } from '@stencil/router';
 import { initializeNimiq, nimiq } from '../../models/nimiq';
-import { Game, Board } from '../../models/game';
+import { Game, Board, Sign } from '../../models/game';
 
 enum GAME_STATUS {
   LOADING,
   JOIN,
   WAIT,
-  PLAY
+  PLAY,
+  WON,
+  LOST,
+  TIE,
+  NOT_IN_GAME
 }
 
 @Component({
   tag: 'luna-game'
 })
 export class LunaGame {
-  connectedPlayer: string = null;
+  connectedPlayer: string;
+  simulatedSign: number = Sign.Empty;
+
+  @Element() el: HTMLElement;
 
   @Prop() match: MatchResults;
 
@@ -27,38 +34,16 @@ export class LunaGame {
 
   @Listen('fieldSelected')
   async onFieldSelected(event) {
-    console.log(event.detail);
     const field = event.detail;
 
     this.play(field);
   }
 
-  async join() {
-    const options = {
-      appName: 'Tic Tac Toe',
-      recipient: this.address,
-      value: 1 * 1e5,
-      extraData: Game.JOIN
-    };
-
-    const signedTransaction = await nimiq.hub.checkout(options);
-    console.log(signedTransaction);
-  }
-
-  async play(field) {
-    const options = {
-      appName: 'Tic Tac Toe',
-      recipient: this.address,
-      value: 1 * 1e5,
-      extraData: field
-    };
-
-    const signedTransaction = await nimiq.hub.checkout(options);
-    console.log(signedTransaction);
-  }
-
   async componentDidLoad() {
     this.connectedPlayer = nimiq.user;
+
+    // setup mouse listener
+    this.setupHoverListeners();
 
     let _address;
     if (this.match && this.match.params && this.match.params.game) {
@@ -74,6 +59,68 @@ export class LunaGame {
     game.initialize();
   }
 
+  setupHoverListeners() {
+    const fields = this.el.querySelectorAll('luna-field');
+
+    const overHandler = event => {
+      const field = event.target.name;
+
+      if (this.board[field] !== Sign.Empty) {
+        return;
+      }
+
+      this.board = {
+        ...this.board,
+        [field]: this.simulatedSign
+      };
+    };
+
+    const leaveHandler = event => {
+      const field = event.target.name;
+
+      const isSimulated =
+        this.board[field] === Sign.SimCircle ||
+        this.board[field] === Sign.SimCross;
+
+      if (!isSimulated) {
+        return;
+      }
+
+      this.board = {
+        ...this.board,
+        [field]: Sign.Empty
+      };
+    };
+
+    fields.forEach(field => {
+      field.addEventListener('mouseenter', overHandler);
+      field.addEventListener('mouseleave', leaveHandler);
+    });
+  }
+
+  async join() {
+    const options = {
+      appName: 'Tic Tac Toe',
+      recipient: this.address,
+      value: 1 * 1e5,
+      extraData: Game.JOIN
+    };
+
+    await nimiq.hub.checkout(options);
+  }
+
+  async play(field) {
+    const options = {
+      appName: 'Tic Tac Toe',
+      sender: this.connectedPlayer,
+      recipient: this.address,
+      value: 1 * 1e5,
+      extraData: field
+    };
+
+    await nimiq.hub.checkout(options);
+  }
+
   update(state) {
     console.log(state);
     this.address = state.address;
@@ -81,6 +128,10 @@ export class LunaGame {
     this.playerOne = state.playerOne;
     this.playerTwo = state.playerTwo;
     this.nextPlayer = state.nextPlayer;
+
+    // which sign does the current user have ?
+    this.simulatedSign =
+      this.connectedPlayer === this.playerOne ? Sign.SimCross : Sign.SimCircle;
 
     const noPlayers = !this.playerOne && !this.playerTwo;
     const otherPlayerJoined =
@@ -90,6 +141,29 @@ export class LunaGame {
 
     if (noPlayers || otherPlayerJoined) {
       this.status = GAME_STATUS.JOIN;
+      return;
+    }
+
+    if (
+      this.playerOne &&
+      this.playerTwo &&
+      this.connectedPlayer !== this.playerOne &&
+      this.connectedPlayer !== this.playerTwo
+    ) {
+      this.status = GAME_STATUS.NOT_IN_GAME;
+      return;
+    }
+
+    if (state.winner === 'tie') {
+      this.status = GAME_STATUS.TIE;
+      return;
+    }
+
+    if (state.winner === this.connectedPlayer) {
+      this.status = GAME_STATUS.WON;
+      return;
+    } else if (state.winner && state.winner !== this.connectedPlayer) {
+      this.status = GAME_STATUS.LOST;
       return;
     }
 
@@ -170,6 +244,32 @@ export class LunaGame {
           {this.status === GAME_STATUS.WAIT ? (
             <div class="absolute inset-0 flex items-center justify-center light-overlay">
               <p class="text-lg font-bold">Waiting for other player...</p>
+            </div>
+          ) : null}
+
+          {this.status === GAME_STATUS.WON ? (
+            <div class="absolute inset-0 flex items-center justify-center light-overlay">
+              <p class="text-lg font-bold">Congratulations, you won !</p>
+            </div>
+          ) : null}
+
+          {this.status === GAME_STATUS.LOST ? (
+            <div class="absolute inset-0 flex items-center justify-center light-overlay">
+              <p class="text-lg font-bold">Game over !</p>
+            </div>
+          ) : null}
+
+          {this.status === GAME_STATUS.TIE ? (
+            <div class="absolute inset-0 flex items-center justify-center light-overlay">
+              <p class="text-lg font-bold">It's a tie !</p>
+            </div>
+          ) : null}
+
+          {this.status === GAME_STATUS.NOT_IN_GAME ? (
+            <div class="absolute inset-0 flex items-center justify-center light-overlay">
+              <p class="text-lg font-bold">
+                Hum, looks like you're not in this game
+              </p>
             </div>
           ) : null}
         </div>

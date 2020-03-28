@@ -1,5 +1,6 @@
 import { Component, h, Prop, Host, Event } from '@stencil/core';
 import { EventEmitter } from '@stencil/router/dist/types/stencil.core';
+import { Sign } from '../../models/game';
 
 @Component({
   tag: 'luna-field'
@@ -7,7 +8,7 @@ import { EventEmitter } from '@stencil/router/dist/types/stencil.core';
 export class LunaField {
   @Prop() middle = false;
   @Prop() name: string;
-  @Prop() value = 0;
+  @Prop() value: Sign = Sign.Empty;
 
   @Event() fieldSelected: EventEmitter;
 
@@ -19,27 +20,23 @@ export class LunaField {
       classes += ' border-r-2 border-l-2';
     }
 
-    if (this.value === 2) {
-      classes += ' text-indigo-800';
-    } else if (this.value === 1) {
-      classes += ' text-yellow-500';
+    if (this.value === Sign.Circle) {
+      classes += ' text-indigo-800 cursor-not-allowed';
+    } else if (this.value === Sign.Cross) {
+      classes += ' text-yellow-500 cursor-not-allowed';
     } else {
       classes += ' text-gray-200 hover:text-gray-400';
-    }
-
-    if (this.value !== 0) {
-      classes += ' cursor-not-allowed';
     }
 
     return classes;
   }
 
   getColor() {
-    if (this.value === 2) {
+    if (this.value === Sign.Circle) {
       return 'text-indigo-800';
     }
 
-    if (this.value === 1) {
+    if (this.value === Sign.Cross) {
       return 'text-yellow-500';
     }
 
@@ -47,7 +44,7 @@ export class LunaField {
   }
 
   getSign() {
-    if (this.value === 1) {
+    if (this.value === Sign.Cross || this.value === Sign.SimCross) {
       return (
         <svg
           viewBox="0 0 24 24"
@@ -64,7 +61,7 @@ export class LunaField {
       );
     }
 
-    if (this.value === 2) {
+    if (this.value === Sign.Circle || this.value === Sign.SimCircle) {
       return (
         <svg
           viewBox="0 0 24 24"
@@ -80,14 +77,7 @@ export class LunaField {
       );
     }
 
-    return (
-      <svg viewBox="0 0 27 24" class={'w-12 h-12'}>
-        <path
-          d="M26.6991 10.875L21.0741 1.125C20.6691 0.4275 19.9266 0 19.1241 0H7.87414C7.07164 0 6.32914 0.4275 5.92789 1.125L0.302891 10.875C-0.0983594 11.5725 -0.0983594 12.4275 0.302891 13.125L5.92789 22.875C6.32914 23.5725 7.07164 24 7.87414 24H19.1241C19.9266 24 20.6691 23.5725 21.0704 22.875L26.6954 13.125C27.1004 12.4275 27.1004 11.5725 26.6991 10.875Z"
-          fill="currentColor"
-        />
-      </svg>
-    );
+    return <div class={'w-12 h-12'}></div>;
   }
 
   render() {
@@ -95,7 +85,7 @@ export class LunaField {
       <Host class="block">
         <button
           onClick={() => this.fieldSelected.emit(this.name)}
-          disabled={this.value !== 0}
+          disabled={this.value === Sign.Circle || this.value === Sign.Cross}
           type="button"
           class={this.getClasses()}
         >

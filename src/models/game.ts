@@ -1,5 +1,14 @@
 import { Wallet, ClientTransactionDetails } from '@nimiq/core-web';
 import { nimiqLoaded, consensusEstablished, nimiq } from './nimiq';
+import { areEqual } from './utils';
+
+export enum Sign {
+  Empty = 0,
+  Cross = 1,
+  Circle = 2,
+  SimCross = 3,
+  SimCircle = 4
+}
 
 interface Move {
   hash: string;
@@ -26,6 +35,7 @@ export interface GameState {
   moves: Move[];
   nextPlayer: string;
   board: Board;
+  winner?: string;
 }
 
 export class Game {
@@ -73,16 +83,12 @@ export class Game {
   async initialize() {
     this.state.address = this.wallet.address.toUserFriendlyAddress();
 
-    console.log('init game');
-
     await consensusEstablished;
 
-    console.log('get addresses');
     const transactions = await nimiq.client.getTransactionsByAddress(
       this.wallet.address
     );
 
-    console.log(transactions);
     // handle existing transactions (oldest first)
     const moves = transactions
       .sort((t1, t2) => {
@@ -104,6 +110,9 @@ export class Game {
       },
       [this.wallet.address]
     );
+
+    // notify (in case there were no moves)
+    this.notify();
   }
 
   addMove(move: Move) {
@@ -127,13 +136,27 @@ export class Game {
 
     // play move on board
     if (move.field !== Game.JOIN) {
-      this.state.board[move.field] = isPlayerOne ? 1 : isPlayerTwo ? 2 : 0;
+      this.state.board[move.field] = isPlayerOne
+        ? Sign.Cross
+        : isPlayerTwo
+        ? Sign.Circle
+        : Sign.Empty;
     }
 
     // set next player
     this.state.nextPlayer = isPlayerOne
       ? this.state.playerTwo
       : this.state.playerOne;
+
+    if (this.isWon()) {
+      // victory
+      this.state.winner = move.address;
+    }
+
+    if (!this.state.winner && this.state.moves.length >= 2 + 9) {
+      // tie
+      this.state.winner = 'tie';
+    }
 
     this.notify();
   }
@@ -184,6 +207,37 @@ export class Game {
     return true;
   }
 
+  isWon() {
+    return this.checkRows() || this.checkColumns() || this.checkDiagonals();
+  }
+
+  checkRows() {
+    const rows = [1, 2, 3];
+    const board = this.state.board;
+
+    return rows.some(row => {
+      return areEqual(board[`a${row}`], board[`b${row}`], board[`c${row}`]);
+    });
+  }
+
+  checkColumns() {
+    const columns = ['a', 'b', 'c'];
+    const board = this.state.board;
+
+    return columns.some(col => {
+      return areEqual(board[`${col}1`], board[`${col}2`], board[`${col}3`]);
+    });
+  }
+
+  checkDiagonals() {
+    const board = this.state.board;
+
+    const leftDiagonal = areEqual(board['a1'], board['b2'], board['c3']);
+    const rightDiagonal = areEqual(board['a3'], board['b2'], board['c1']);
+
+    return leftDiagonal || rightDiagonal;
+  }
+
   convertTransactionToMove(transaction: ClientTransactionDetails): Move {
     const sender = transaction.sender;
 
@@ -219,8 +273,6 @@ export class Game {
     const cleanKey = address.replace(/\=/g, '.');
     const buffer = Nimiq.BufferUtils.fromBase64Url(cleanKey);
     const wallet = Nimiq.Wallet.loadPlain(buffer);
-
-    console.log(wallet.address.toUserFriendlyAddress());
 
     return new Game(wallet);
   }

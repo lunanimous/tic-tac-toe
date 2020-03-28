@@ -8,6 +8,9 @@
 
 import { HTMLStencilElement, JSXBase } from '@stencil/core/internal';
 import {
+  Sign,
+} from './models/game';
+import {
   MatchResults,
   RouterHistory,
 } from '@stencil/router';
@@ -16,7 +19,7 @@ export namespace Components {
   interface LunaField {
     'middle': boolean;
     'name': string;
-    'value': number;
+    'value': Sign;
   }
   interface LunaGame {
     'match': MatchResults;
@@ -76,7 +79,7 @@ declare namespace LocalJSX {
     'middle'?: boolean;
     'name'?: string;
     'onFieldSelected'?: (event: CustomEvent<any>) => void;
-    'value'?: number;
+    'value'?: Sign;
   }
   interface LunaGame {
     'match'?: MatchResults;
