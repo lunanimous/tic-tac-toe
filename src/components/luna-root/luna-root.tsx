@@ -1,5 +1,6 @@
 import { Component, h, Host, State } from '@stencil/core';
-import { nimiq } from '../../models/nimiq';
+import { nimiq, initializeNimiq } from '../../utils/nimiq';
+import { GlobalConfig } from '../../utils/config';
 
 @Component({
   tag: 'luna-root'
@@ -7,9 +8,13 @@ import { nimiq } from '../../models/nimiq';
 export class LunaRoot {
   @State() isAuthenticated: boolean = false;
 
+  componentWillLoad() {
+    initializeNimiq();
+  }
+
   async login() {
     const options = {
-      appName: 'Tic Tac Toe'
+      appName: GlobalConfig.appName
     };
 
     const addressInfo = await nimiq.hub.chooseAddress(options);
@@ -23,10 +28,7 @@ export class LunaRoot {
       <Host>
         <header class="max-w-4xl mx-auto mt-8">
           <div class="text-center">
-            <a
-              href="https://lunanimous.github.io"
-              class="inline-flex p-2 text-2xl text-gray-600 font text-center"
-            >
+            <a href="https://lunanimous.github.io" class="inline-flex p-2 text-2xl text-gray-600 font text-center">
               <span>Lunanimous</span>
               <svg
                 fill="none"
@@ -44,22 +46,22 @@ export class LunaRoot {
         </header>
 
         <section class="max-w-4xl mx-auto mt-12">
-          <h2 class="text-center text-gray-800 text-4xl mt-4">Tic Tac Toe</h2>
+          <h2 class="text-center text-gray-800 text-4xl mt-4">{GlobalConfig.appName}</h2>
         </section>
 
         {this.isAuthenticated ? (
           <main class="max-w-2xl mx-auto mt-12">
-            <stencil-router root="/tic-tac-toe/">
+            <stencil-router root={GlobalConfig.base} historyType={'hash'}>
               <stencil-route-switch scrollTopOffset={0}>
                 <stencil-route url="/" component="luna-home" exact={true} />
-                <stencil-route url="/:game" component="luna-game" />
+                <stencil-route url="/game/:game" component="luna-game" />
               </stencil-route-switch>
             </stencil-router>
           </main>
         ) : (
           <main class="max-w-2xl mx-auto mt-12">
             <div class="text-center p-8">
-              <p class="mb-6">Login is required to play Tic Tac Toe</p>
+              <p class="mb-6">Login is required to play {GlobalConfig.appName}</p>
               <button
                 onClick={() => {
                   this.login();
@@ -74,9 +76,7 @@ export class LunaRoot {
         )}
 
         <footer class="max-w-2xl mx-auto text-center mt-16 border-t">
-          <p class="text-gray-500 mt-8">
-            &copy; Lunanimous. All rights reserved.
-          </p>
+          <p class="text-gray-500 mt-8">&copy; Lunanimous. All rights reserved.</p>
         </footer>
       </Host>
     );

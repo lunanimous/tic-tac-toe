@@ -9,7 +9,7 @@
 import { HTMLStencilElement, JSXBase } from '@stencil/core/internal';
 import {
   Sign,
-} from './models/game';
+} from './utils/game';
 import {
   MatchResults,
   RouterHistory,

@@ -1,7 +1,8 @@
 import { Component, h, Prop, State, Listen, Element } from '@stencil/core';
 import { MatchResults } from '@stencil/router';
-import { initializeNimiq, nimiq } from '../../models/nimiq';
-import { Game, Board, Sign } from '../../models/game';
+import { nimiq } from '../../utils/nimiq';
+import { Game, Board, Sign } from '../../utils/game';
+import { GlobalConfig } from '../../utils/config';
 
 enum GAME_STATUS {
   LOADING,
@@ -52,8 +53,6 @@ export class LunaGame {
       _address = null;
     }
 
-    initializeNimiq();
-
     const game = await Game.fromUrlAddress(_address);
     game.addObserver(this.update.bind(this));
     game.initialize();
@@ -98,10 +97,11 @@ export class LunaGame {
 
   async join() {
     const options = {
-      appName: 'Tic Tac Toe',
+      appName: GlobalConfig.appName,
+      sender: this.connectedPlayer,
       recipient: this.address,
-      value: 1 * 1e5,
-      fee: 1,
+      value: GlobalConfig.cost,
+      fee: GlobalConfig.fee,
       extraData: Game.JOIN
     };
 
@@ -110,11 +110,11 @@ export class LunaGame {
 
   async play(field) {
     const options = {
-      appName: 'Tic Tac Toe',
+      appName: GlobalConfig.appName,
       sender: this.connectedPlayer,
       recipient: this.address,
-      value: 1 * 1e5,
-      fee: 1,
+      value: GlobalConfig.cost,
+      fee: GlobalConfig.fee,
       extraData: field
     };
 

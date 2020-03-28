@@ -1,6 +1,6 @@
 import { Component, h, Prop, Host, Event } from '@stencil/core';
 import { EventEmitter } from '@stencil/router/dist/types/stencil.core';
-import { Sign } from '../../models/game';
+import { Sign } from '../../utils/game';
 
 @Component({
   tag: 'luna-field'

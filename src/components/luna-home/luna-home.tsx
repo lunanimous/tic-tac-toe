@@ -1,5 +1,6 @@
 import { Component, h, Host, State, Prop } from '@stencil/core';
 import { RouterHistory } from '@stencil/router';
+import { Game } from '../../utils/game';
 
 @Component({
   tag: 'luna-home'
@@ -22,12 +23,10 @@ export class LunaHome {
     }
   ];
 
-  createNewGame() {
-    // generate wallet for game
-    // const wallet = Nimiq.Wallet.generate();
-    // const buffer = wallet.exportPlain();
-    // const urlSafe = Nimiq.BufferUtils.toBase64Url(buffer).replace(/\./g, '=');
-    alert('new game');
+  async createNewGame() {
+    const game = await Game.generate();
+
+    this.history.push(`/game/${game.hash}`);
   }
 
   openGame(game: any) {

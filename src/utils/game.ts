@@ -1,6 +1,7 @@
 import { Wallet, ClientTransactionDetails } from '@nimiq/core-web';
 import { nimiqLoaded, consensusEstablished, nimiq } from './nimiq';
 import { areEqual } from './utils';
+import { GlobalConfig } from './config';
 
 export enum Sign {
   Empty = 0,
@@ -62,7 +63,7 @@ export class Game {
     }
   };
 
-  static FEE = 1;
+  static FEE = GlobalConfig.fee;
   static JOIN = 'join';
   static ALLOWED_MOVES = ['a1', 'a2', 'a3', 'b1', 'b2', 'b3', 'c1', 'c2', 'c3', Game.JOIN];
 
@@ -76,6 +77,8 @@ export class Game {
     await consensusEstablished;
 
     const transactions = await nimiq.client.getTransactionsByAddress(this.wallet.address);
+
+    console.log(transactions);
 
     // handle existing transactions (oldest first)
     const moves = transactions
@@ -241,6 +244,10 @@ export class Game {
     const board = this.state.board;
 
     return rows.some(row => {
+      if (board[`a${row}`] === Sign.Empty) {
+        return false;
+      }
+
       return areEqual(board[`a${row}`], board[`b${row}`], board[`c${row}`]);
     });
   }
@@ -250,12 +257,20 @@ export class Game {
     const board = this.state.board;
 
     return columns.some(col => {
+      if (board[`${col}1`] === Sign.Empty) {
+        return false;
+      }
+
       return areEqual(board[`${col}1`], board[`${col}2`], board[`${col}3`]);
     });
   }
 
   checkDiagonals() {
     const board = this.state.board;
+
+    if (board['b2'] === Sign.Empty) {
+      return false;
+    }
 
     const leftDiagonal = areEqual(board['a1'], board['b2'], board['c3']);
     const rightDiagonal = areEqual(board['a3'], board['b2'], board['c1']);
@@ -273,6 +288,13 @@ export class Game {
     };
   }
 
+  get hash() {
+    const buffer = this.wallet.exportPlain();
+    const urlSafe = Nimiq.BufferUtils.toBase64Url(buffer).replace(/\./g, '=');
+
+    return urlSafe;
+  }
+
   addObserver(callback) {
     this.observers.push(callback);
   }
@@ -287,10 +309,12 @@ export class Game {
     });
   }
 
-  // static async newGame(): Game {
-  //   // TODO: generate new game
-  //   return {};
-  // }
+  static async generate(): Promise<Game> {
+    await nimiqLoaded;
+    const wallet = Nimiq.Wallet.generate();
+
+    return new Game(wallet);
+  }
 
   static async fromUrlAddress(address: string): Promise<Game> {
     await nimiqLoaded;

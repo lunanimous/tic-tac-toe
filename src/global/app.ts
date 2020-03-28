@@ -1,3 +1,5 @@
+import { GlobalConfig } from '../utils/config';
+
 export default async () => {
   /**
    * The code to be executed should be placed within a default function that is
@@ -5,5 +7,5 @@ export default async () => {
    * is wrapped in the function() that is exported.
    */
 
-  window['NIMIQ_IQONS_SVG_PATH'] = './assets/iqons.min.svg';
+  window['NIMIQ_IQONS_SVG_PATH'] = location.origin + GlobalConfig.base + GlobalConfig.iqons;
 };
