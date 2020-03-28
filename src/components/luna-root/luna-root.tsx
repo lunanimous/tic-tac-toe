@@ -26,7 +26,7 @@ export class LunaRoot {
   render() {
     return (
       <Host>
-        <header class="max-w-4xl mx-auto mt-8">
+        <header class="max-w-4xl mx-auto mt-6">
           <div class="text-center">
             <a href="https://lunanimous.github.io" class="inline-flex p-2 text-2xl text-gray-600 font text-center">
               <span>Lunanimous</span>
@@ -45,13 +45,13 @@ export class LunaRoot {
           </div>
         </header>
 
-        <section class="max-w-4xl mx-auto mt-12">
-          <h2 class="text-center text-gray-800 text-4xl mt-4">{GlobalConfig.appName}</h2>
+        <section class="max-w-4xl mx-auto mt-8">
+          <h2 class="text-center text-gray-800 text-4xl">{GlobalConfig.appName}</h2>
         </section>
 
         {this.isAuthenticated ? (
           <main class="max-w-2xl mx-auto mt-12">
-            <stencil-router root={GlobalConfig.base} historyType={'hash'}>
+            <stencil-router historyType={'hash'}>
               <stencil-route-switch scrollTopOffset={0}>
                 <stencil-route url="/" component="luna-home" exact={true} />
                 <stencil-route url="/game/:game" component="luna-game" />

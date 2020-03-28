@@ -1,6 +1,7 @@
 import { Component, h, Host, State, Prop } from '@stencil/core';
 import { RouterHistory } from '@stencil/router';
 import { Game } from '../../utils/game';
+import { GameManager, GameInfo } from '../../utils/game-manager';
 
 @Component({
   tag: 'luna-home'
@@ -8,36 +9,31 @@ import { Game } from '../../utils/game';
 export class LunaHome {
   @Prop() history: RouterHistory;
 
-  @State() games = [
-    {
-      address: '123456789',
-      playerOne: 'NQ05 EYDD HLP3 J57S P6YJ JL0X SJDK RF9K A9QV',
-      playerTwo: 'NQ19 97P8 BRJY YY4X E5AM TG5J 45HM 7PX0 6H37',
-      winner: null
-    },
-    {
-      address: '123456789',
-      playerOne: 'NQ05 EYDD HLP3 J57S P6YJ JL0X SJDK RF9K A9QV',
-      playerTwo: 'NQ19 97P8 BRJY YY4X E5AM TG5J 45HM 7PX0 6H37',
-      winner: null
-    }
-  ];
+  @State() games: GameInfo[] = [];
+
+  componentWillLoad() {
+    GameManager.importFromStorage();
+
+    this.games = GameManager.games;
+  }
 
   async createNewGame() {
     const game = await Game.generate();
+    GameManager.addGame(game);
 
     this.history.push(`/game/${game.hash}`);
   }
 
   openGame(game: any) {
-    this.history.push(`/${game.address}`, {});
+    this.history.push(`/game/${game.hash}`, {});
   }
 
   deleteGame(event, game: any) {
     event.stopPropagation();
     event.preventDefault();
 
-    alert('delete' + game.address);
+    GameManager.deleteGame(game);
+    this.games = GameManager.games;
   }
 
   render() {
@@ -64,6 +60,8 @@ export class LunaHome {
             <span>New game</span>
           </button>
         </div>
+
+        {this.games.length === 0 ? <p class="text-center py-12 px-4">No games yet</p> : null}
 
         {this.games.map(game => (
           <div
