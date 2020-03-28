@@ -30,6 +30,7 @@ export interface GameState {
 
 export class Game {
   wallet: Wallet;
+  handledHashes: string[] = [];
   observers: Function[] = [];
 
   state: GameState = {
@@ -72,8 +73,11 @@ export class Game {
   async initialize() {
     this.state.address = this.wallet.address.toUserFriendlyAddress();
 
-    await consensusEstablished();
+    console.log('init game');
 
+    await consensusEstablished;
+
+    console.log('get addresses');
     const transactions = await nimiq.client.getTransactionsByAddress(
       this.wallet.address
     );
@@ -109,6 +113,7 @@ export class Game {
     }
 
     this.state.moves.push(move);
+    this.handledHashes.push(move.hash);
 
     // initialize player if not done yet
     if (!this.state.playerOne) {
@@ -125,10 +130,20 @@ export class Game {
       this.state.board[move.field] = isPlayerOne ? 1 : isPlayerTwo ? 2 : 0;
     }
 
+    // set next player
+    this.state.nextPlayer = isPlayerOne
+      ? this.state.playerTwo
+      : this.state.playerOne;
+
     this.notify();
   }
 
   isValidMove(move: Move): boolean {
+    if (this.handledHashes.indexOf(move.hash) > -1) {
+      // already handled that transaction
+      return false;
+    }
+
     if (
       move.field !== Game.JOIN &&
       !this.state.playerOne &&
@@ -166,8 +181,6 @@ export class Game {
       return false;
     }
 
-    console.log(move);
-
     return true;
   }
 
@@ -201,7 +214,7 @@ export class Game {
   // }
 
   static async fromUrlAddress(address: string): Promise<Game> {
-    await nimiqLoaded();
+    await nimiqLoaded;
 
     const cleanKey = address.replace(/\=/g, '.');
     const buffer = Nimiq.BufferUtils.fromBase64Url(cleanKey);

@@ -16,14 +16,12 @@ export const nimiq: NimiqHelper = {
 };
 
 let consensusResolver;
-export async function consensusEstablished() {
-  return new Promise(resolve => (consensusResolver = resolve));
-}
+export const consensusEstablished = new Promise(
+  resolve => (consensusResolver = resolve)
+);
 
 let loadedResolver;
-export async function nimiqLoaded() {
-  return new Promise(resolve => (loadedResolver = resolve));
-}
+export const nimiqLoaded = new Promise(resolve => (loadedResolver = resolve));
 
 export async function initializeNimiq() {
   // load nimiq library
@@ -33,9 +31,7 @@ export async function initializeNimiq() {
   loadedResolver();
 
   // start consensus
-  if (!nimiq.client) {
-    startConsensus();
-  }
+  startConsensus();
 }
 
 async function startConsensus() {
@@ -48,7 +44,13 @@ async function startConsensus() {
   nimiq.client = client;
   nimiq.network = client.network;
 
-  nimiq.client.waitForConsensusEstablished().then(() => consensusResolver());
+  console.log(nimiq.client._consensusState);
+
+  // does not work if consensus already established
+  nimiq.client.waitForConsensusEstablished().then(() => {
+    console.log('established');
+    consensusResolver();
+  });
 
   console.log('Syncing and establishing consensus...');
 }

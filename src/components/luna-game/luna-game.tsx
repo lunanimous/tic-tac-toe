@@ -22,6 +22,7 @@ export class LunaGame {
   @State() address: string = '';
   @State() playerOne: string;
   @State() playerTwo: string;
+  @State() nextPlayer: string;
   @State() board: Board = {};
 
   @Listen('fieldSelected')
@@ -79,13 +80,25 @@ export class LunaGame {
     this.board = state.board;
     this.playerOne = state.playerOne;
     this.playerTwo = state.playerTwo;
+    this.nextPlayer = state.nextPlayer;
 
-    // missing one player
-    if (!this.playerTwo) {
-      this.status = GAME_STATUS.WAIT;
-    } else {
-      this.status = GAME_STATUS.PLAY;
+    const noPlayers = !this.playerOne && !this.playerTwo;
+    const otherPlayerJoined =
+      this.playerOne &&
+      !this.playerTwo &&
+      this.connectedPlayer !== this.playerOne;
+
+    if (noPlayers || otherPlayerJoined) {
+      this.status = GAME_STATUS.JOIN;
+      return;
     }
+
+    if (this.connectedPlayer === this.nextPlayer) {
+      this.status = GAME_STATUS.PLAY;
+      return;
+    }
+
+    this.status = GAME_STATUS.WAIT;
   }
 
   render() {
