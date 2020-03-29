@@ -1,4 +1,5 @@
-import { Wallet, ClientTransactionDetails } from '@nimiq/core-web';
+declare var Nimiq;
+import { Wallet, ClientTransactionDetails } from '@nimiq/core-web/';
 import { nimiqLoaded, consensusEstablished, nimiq } from './nimiq';
 import { areEqual } from './utils';
 import { GlobalConfig } from './config';
