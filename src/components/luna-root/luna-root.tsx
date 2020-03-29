@@ -1,6 +1,7 @@
 import { Component, h, Host, State } from '@stencil/core';
 import { nimiq, initializeNimiq } from '../../utils/nimiq';
 import { GlobalConfig } from '../../utils/config';
+import { GameManager } from '../../utils/game-manager';
 
 @Component({
   tag: 'luna-root'
@@ -19,6 +20,7 @@ export class LunaRoot {
 
     const addressInfo = await nimiq.hub.chooseAddress(options);
     nimiq.user = addressInfo.address;
+    GameManager.setUser(nimiq.user);
 
     this.isAuthenticated = true;
   }

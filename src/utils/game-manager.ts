@@ -7,12 +7,16 @@ export interface GameInfo {
 }
 
 export class Manager {
+  userAddress: string;
   games: GameInfo[] = [];
 
-  static GAMES_KEY = 'luna/ttt/games';
-  static USER_KEY = 'luna/ttt/user';
+  static GAMES_KEY = 'luna/ttt/games/';
 
   constructor() {}
+
+  setUser(userAddress) {
+    this.userAddress = userAddress;
+  }
 
   addOrUpdateGame(game: Game) {
     const games = this.getGames();
@@ -48,7 +52,8 @@ export class Manager {
   }
 
   getGames() {
-    const rawGames = localStorage.getItem(Manager.GAMES_KEY);
+    const key = Manager.GAMES_KEY + this.userAddress;
+    const rawGames = localStorage.getItem(key);
 
     if (!rawGames) {
       return [];
@@ -64,9 +69,10 @@ export class Manager {
   }
 
   save(games) {
+    const key = Manager.GAMES_KEY + this.userAddress;
     const rawGames = JSON.stringify(games);
 
-    localStorage.setItem(Manager.GAMES_KEY, rawGames);
+    localStorage.setItem(key, rawGames);
   }
 }
 
