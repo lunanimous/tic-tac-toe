@@ -36,6 +36,7 @@ export interface GameState {
   moves: Move[];
   nextPlayer: string;
   board: Board;
+  lastMovePending?: boolean;
   winner?: string;
 }
 
@@ -78,13 +79,11 @@ export class Game {
 
     const transactions = await nimiq.client.getTransactionsByAddress(this.wallet.address);
 
-    console.log(transactions);
-
     // handle existing transactions (oldest first)
     const moves = transactions
       .filter(transaction => {
-        const isMined = transaction.state !== Nimiq.Client.TransactionState.MINED;
-        const isConfirmed = transaction.state !== Nimiq.Client.TransactionState.CONFIRMED;
+        const isMined = transaction.state === Nimiq.Client.TransactionState.MINED;
+        const isConfirmed = transaction.state === Nimiq.Client.TransactionState.CONFIRMED;
 
         return isMined || isConfirmed;
       })
@@ -101,11 +100,20 @@ export class Game {
     // start listening for new transactions
     nimiq.client.addTransactionListener(
       (transaction: ClientTransactionDetails) => {
-        const isMined = transaction.state !== Nimiq.Client.TransactionState.MINED;
-        const isConfirmed = transaction.state !== Nimiq.Client.TransactionState.CONFIRMED;
+        if (
+          transaction.sender.toUserFriendlyAddress() === this.state.nextPlayer &&
+          transaction.state === Nimiq.Client.TransactionState.PENDING
+        ) {
+          // player has played, but transaction still pending
+          this.state.lastMovePending = true;
+          this.notify();
+          return;
+        }
+
+        const isMined = transaction.state === Nimiq.Client.TransactionState.MINED;
+        const isConfirmed = transaction.state === Nimiq.Client.TransactionState.CONFIRMED;
 
         if (!isMined && !isConfirmed) {
-          // we ignore unconfirmed transactions
           return;
         }
 
@@ -125,6 +133,8 @@ export class Game {
       // invalid move, we ignore it
       return;
     }
+
+    this.state.lastMovePending = false;
 
     this.state.moves.push(move);
     this.handledHashes.push(move.hash);

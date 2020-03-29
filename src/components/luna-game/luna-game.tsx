@@ -13,7 +13,8 @@ enum GAME_STATUS {
   WON,
   LOST,
   TIE,
-  NOT_IN_GAME
+  NOT_IN_GAME,
+  PENDING
 }
 
 @Component({
@@ -152,7 +153,7 @@ export class LunaGame {
   }
 
   update(state) {
-    console.log(state);
+    console.debug(state);
     this.address = state.address;
     this.board = state.board;
     this.playerOne = state.playerOne;
@@ -167,6 +168,11 @@ export class LunaGame {
 
     if (noPlayers || otherPlayerJoined) {
       this.status = GAME_STATUS.JOIN;
+      return;
+    }
+
+    if (this.nextPlayer === this.connectedPlayer && state.lastMovePending) {
+      this.status = GAME_STATUS.PENDING;
       return;
     }
 
@@ -321,6 +327,12 @@ export class LunaGame {
             {this.status === GAME_STATUS.NOT_IN_GAME ? (
               <div class="absolute inset-0 flex items-center justify-center light-overlay">
                 <p class="text-lg font-bold">Hum, looks like you're not in this game</p>
+              </div>
+            ) : null}
+
+            {this.status === GAME_STATUS.PENDING ? (
+              <div class="absolute inset-0 flex items-center justify-center light-overlay">
+                <p class="text-lg font-bold">Transaction is on its way...</p>
               </div>
             ) : null}
           </div>
