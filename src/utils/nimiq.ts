@@ -25,20 +25,14 @@ export const consensusEstablished = new Promise(resolve => (consensusResolver = 
 let loadedResolver;
 export const nimiqLoaded = new Promise(resolve => (loadedResolver = resolve));
 
-export async function initializeNimiq() {
-  const start = async () => {
-    loadedResolver();
-
-    // start consensus
-    startConsensus();
-  };
-
+export function initializeNimiq() {
   // load nimiq library
-  // const workerUrl = location.origin + GlobalConfig.base + GlobalConfig.workers;
-  Nimiq.init(start);
+  Nimiq.init(startConsensus);
 }
 
 async function startConsensus() {
+  loadedResolver();
+
   if (GlobalConfig.network === 'main') {
     Nimiq.GenesisConfig.main();
   } else {
