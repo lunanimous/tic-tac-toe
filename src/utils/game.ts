@@ -100,8 +100,11 @@ export class Game {
     // start listening for new transactions
     nimiq.client.addTransactionListener(
       (transaction: ClientTransactionDetails) => {
+        console.log(transaction.sender.toUserFriendlyAddress(), transaction.state);
+        const sender = transaction.sender.toUserFriendlyAddress();
+
         if (
-          transaction.sender.toUserFriendlyAddress() === this.state.nextPlayer &&
+          (sender === this.state.nextPlayer || !this.state.playerTwo) &&
           transaction.state === Nimiq.Client.TransactionState.PENDING
         ) {
           // player has played, but transaction still pending
@@ -133,6 +136,8 @@ export class Game {
       // invalid move, we ignore it
       return;
     }
+
+    console.log(move);
 
     this.state.lastMovePending = false;
 
@@ -173,6 +178,7 @@ export class Game {
   }
 
   isValidMove(move: Move): boolean {
+    console.log(move);
     if (this.handledHashes.indexOf(move.hash) > -1) {
       // already handled that transaction
       return false;
@@ -185,6 +191,16 @@ export class Game {
 
     if (move.field === Game.JOIN && this.state.playerOne && this.state.playerTwo) {
       // not accepting new players
+      return false;
+    }
+
+    if (move.field === Game.JOIN && this.state.playerOne === move.address) {
+      // same player can't join twice
+      return false;
+    }
+
+    if (move.field !== Game.JOIN && !this.state.playerTwo) {
+      // can't start moves without both players
       return false;
     }
 

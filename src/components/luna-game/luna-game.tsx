@@ -169,7 +169,14 @@ export class LunaGame {
     // which sign does the current user have ?
     this.simulatedSign = this.connectedPlayer === this.playerOne ? Sign.SimCross : Sign.SimCircle;
 
+    // played but still pending
     if (this.nextPlayer === this.connectedPlayer && state.lastMovePending) {
+      this.status = GAME_STATUS.PENDING;
+      return;
+    }
+
+    // joined but still pending
+    if (state.lastMovePending && !this.playerTwo) {
       this.status = GAME_STATUS.PENDING;
       return;
     }
@@ -337,7 +344,7 @@ export class LunaGame {
 
             {this.status === GAME_STATUS.PENDING ? (
               <div class="absolute inset-0 flex items-center justify-center light-overlay">
-                <p class="text-lg font-bold">Waiting for transacton to be mined...</p>
+                <p class="text-lg font-bold">Waiting for transaction to be mined...</p>
               </div>
             ) : null}
           </div>
