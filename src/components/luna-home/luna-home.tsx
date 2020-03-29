@@ -12,14 +12,12 @@ export class LunaHome {
   @State() games: GameInfo[] = [];
 
   componentWillLoad() {
-    GameManager.importFromStorage();
-
-    this.games = GameManager.games;
+    this.games = GameManager.getGames();
   }
 
   async createNewGame() {
     const game = await Game.generate();
-    GameManager.addGame(game);
+    GameManager.addOrUpdateGame(game);
 
     this.history.push(`/game/${game.hash}`);
   }
@@ -38,8 +36,7 @@ export class LunaHome {
       return;
     }
 
-    GameManager.deleteGame(game);
-    this.games = GameManager.games;
+    this.games = GameManager.deleteGame(game);
   }
 
   render() {

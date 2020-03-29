@@ -4,7 +4,6 @@ export interface GameInfo {
   hash: string;
   playerOne: string;
   playerTwo: string;
-  winner: string;
 }
 
 export class Manager {
@@ -15,33 +14,59 @@ export class Manager {
 
   constructor() {}
 
-  addGame(game: Game) {
+  addOrUpdateGame(game: Game) {
+    const games = this.getGames();
+
     const gameInfo: GameInfo = {
       hash: game.hash,
-      playerOne: null,
-      playerTwo: null,
-      winner: null
+      playerOne: game.state.playerOne,
+      playerTwo: game.state.playerTwo
     };
 
-    this.games.push(gameInfo);
+    const gameIndex = games.findIndex(g => g.hash === game.hash);
 
-    this.saveToStorage();
+    let newGames;
+    if (gameIndex !== -1) {
+      // update
+      newGames = [...games.slice(0, gameIndex), gameInfo, ...games.slice(gameIndex + 1)];
+    } else {
+      // add
+      newGames = [...games, gameInfo];
+    }
+
+    this.save(newGames);
+
+    return newGames;
   }
 
   deleteGame(deletedGame: Game) {
-    this.games = this.games.filter(game => game.hash !== deletedGame.hash);
+    const games = this.getGames();
+    const newGames = games.filter(game => game.hash !== deletedGame.hash);
+    this.save(newGames);
 
-    this.saveToStorage();
+    return newGames;
   }
 
-  importFromStorage() {
-    const json = JSON.parse(localStorage.getItem(Manager.GAMES_KEY));
+  getGames() {
+    const rawGames = localStorage.getItem(Manager.GAMES_KEY);
 
-    this.games = json ? json : [];
+    if (!rawGames) {
+      return [];
+    }
+
+    try {
+      const games = JSON.parse(rawGames);
+
+      return games;
+    } catch (_) {
+      return [];
+    }
   }
 
-  saveToStorage() {
-    localStorage.setItem(Manager.GAMES_KEY, JSON.stringify(this.games));
+  save(games) {
+    const rawGames = JSON.stringify(games);
+
+    localStorage.setItem(Manager.GAMES_KEY, rawGames);
   }
 }
 

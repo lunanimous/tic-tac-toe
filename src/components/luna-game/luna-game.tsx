@@ -4,6 +4,7 @@ import QrCode from '../../vendor/qr-code.min.js';
 import { nimiq } from '../../utils/nimiq';
 import { Game, Board, Sign } from '../../utils/game';
 import { GlobalConfig } from '../../utils/config';
+import { GameManager } from '../../utils/game-manager.js';
 
 enum GAME_STATUS {
   LOADING,
@@ -21,6 +22,7 @@ enum GAME_STATUS {
   tag: 'luna-game'
 })
 export class LunaGame {
+  game: Game;
   connectedPlayer: string;
   simulatedSign: number = Sign.Empty;
 
@@ -57,9 +59,9 @@ export class LunaGame {
       _address = null;
     }
 
-    const game = await Game.fromUrlAddress(_address);
-    game.addObserver(this.update.bind(this));
-    game.initialize();
+    this.game = await Game.fromUrlAddress(_address);
+    this.game.addObserver(this.update.bind(this));
+    this.game.initialize();
   }
 
   setupHoverListeners() {
@@ -153,26 +155,29 @@ export class LunaGame {
   }
 
   update(state) {
-    console.debug(state);
+    console.log(state);
     this.address = state.address;
     this.board = state.board;
     this.playerOne = state.playerOne;
     this.playerTwo = state.playerTwo;
     this.nextPlayer = state.nextPlayer;
 
+    if (this.connectedPlayer === this.playerOne || this.connectedPlayer === this.playerTwo) {
+      GameManager.addOrUpdateGame(this.game);
+    }
+
     // which sign does the current user have ?
     this.simulatedSign = this.connectedPlayer === this.playerOne ? Sign.SimCross : Sign.SimCircle;
 
-    const noPlayers = !this.playerOne && !this.playerTwo;
-    const otherPlayerJoined = this.playerOne && !this.playerTwo && this.connectedPlayer !== this.playerOne;
-
-    if (noPlayers || otherPlayerJoined) {
-      this.status = GAME_STATUS.JOIN;
+    if (this.nextPlayer === this.connectedPlayer && state.lastMovePending) {
+      this.status = GAME_STATUS.PENDING;
       return;
     }
 
-    if (this.nextPlayer === this.connectedPlayer && state.lastMovePending) {
-      this.status = GAME_STATUS.PENDING;
+    const noPlayers = !this.playerOne && !this.playerTwo;
+    const otherPlayerJoined = this.playerOne && !this.playerTwo && this.connectedPlayer !== this.playerOne;
+    if (noPlayers || otherPlayerJoined) {
+      this.status = GAME_STATUS.JOIN;
       return;
     }
 
@@ -332,7 +337,7 @@ export class LunaGame {
 
             {this.status === GAME_STATUS.PENDING ? (
               <div class="absolute inset-0 flex items-center justify-center light-overlay">
-                <p class="text-lg font-bold">Transaction is on its way...</p>
+                <p class="text-lg font-bold">Waiting for transacton to be mined...</p>
               </div>
             ) : null}
           </div>
