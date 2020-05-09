@@ -1,4 +1,4 @@
-declare var Nimiq;
+import Nimiq from '@nimiq/core-web';
 import { Client, ClientNetwork } from '@nimiq/core-web';
 import HubApi from '@nimiq/hub-api';
 import { GlobalConfig } from './config';
@@ -27,7 +27,8 @@ export const nimiqLoaded = new Promise(resolve => (loadedResolver = resolve));
 
 export function initializeNimiq() {
   // load nimiq library
-  Nimiq.init(startConsensus);
+  const workersUrl = location.origin + GlobalConfig.workers;
+  Nimiq.load(workersUrl).then(startConsensus);
 }
 
 async function startConsensus() {

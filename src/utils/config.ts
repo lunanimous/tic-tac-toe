@@ -3,7 +3,7 @@ export const GlobalConfig = {
   base: '/tic-tac-toe',
   network: 'main',
   iqons: '/assets/iqons.min.svg',
-  workers: '/workers/',
+  workers: '/tic-tac-toe/workers/',
   cost: 1 * 1e3,
   fee: 1
 };

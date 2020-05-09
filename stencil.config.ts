@@ -6,8 +6,10 @@ import autoprefixer from 'autoprefixer';
 // https://stenciljs.com/docs/config
 
 export const config: Config = {
+  buildEs5: false,
   globalStyle: 'src/global/app.css',
   globalScript: 'src/global/app.ts',
+  minifyJs: false,
   plugins: [
     postcss({
       plugins: [tailwindcss('./tailwind.config.js'), autoprefixer()]
